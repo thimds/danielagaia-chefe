@@ -1,16 +1,15 @@
 {
   "name": "Chefe · Daniela Gaia",
   "short_name": "Chefe Dani",
-  "description": "Sistema de conteúdo da Daniela Gaia — Chat com o Chefe, rotina semanal e pautas estratégicas.",
-  "start_url": "/",
+  "description": "Sistema de conteúdo da Daniela Gaia",
+  "start_url": ".",
+  "scope": ".",
   "display": "standalone",
-  "background_color": "#FAFAF7",
-  "theme_color": "#FAFAF7",
-  "orientation": "portrait-primary",
+  "background_color": "#F9F5F0",
+  "theme_color": "#F9F5F0",
+  "orientation": "portrait",
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
-  ],
-  "categories": ["productivity", "lifestyle"],
-  "lang": "pt-BR"
+    { "src": "icon.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png" }
+  ]
 }
