@@ -199,6 +199,9 @@ textarea::placeholder { color:var(--ink3); }
 
 ::-webkit-scrollbar { width:3px; height:3px; }
 ::-webkit-scrollbar-thumb { background:var(--bdr2); border-radius:2px; }
+.qbtn { width:100%; background:var(--w); border:1px solid var(--bdr); padding:14px 16px; text-align:left; font-size:14px; color:var(--ink2); cursor:pointer; margin-bottom:8px; border-radius:4px; transition:.15s; font-family:inherit; display:block; }
+.qbtn:hover { background:var(--rose-bg); border-color:var(--rose-b); color:var(--rose); }
+.qbtn:active { transform:scale(.99); }
 </style>
 </head>
 <body>
@@ -217,24 +220,43 @@ textarea::placeholder { color:var(--ink3); }
 
     <!-- CHAT -->
     <div id="vChat" class="view on">
-      <div class="cbox" id="cbox">
-        <div class="cmsgs" id="cmsgs"></div>
-      </div>
-      <div class="chips">
-        <button class="chip" onclick="fill('Tenho uma ideia de pauta: ')">💡 Sugerir pauta</button>
-        <button class="chip" onclick="fill('Preciso de roteiro para: ')">🎬 Pedir roteiro</button>
-        <button class="chip" onclick="fill('Meus números desta semana: ')">📊 Reportar</button>
-        <button class="chip" onclick="fill('Estou travada, me ajuda com: ')">🆘 Travada</button>
-        <button class="chip" onclick="fill('Preciso de uma legenda para: ')">✍️ Legenda</button>
-      </div>
-      <div class="cinp">
-        <div class="irow">
-          <textarea id="tin" placeholder="Mensagem para o Chefe…" rows="1"
-            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"
-            oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
-          <button class="sbtn" id="sbtn" onclick="sendMsg()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z"/></svg>
-          </button>
+      <div class="vscroll">
+        <div style="padding:24px 16px">
+
+          <div style="background:var(--w);border:1px solid var(--bdr);padding:22px;margin-bottom:14px;border-left:3px solid var(--rose)">
+            <div style="font-family:var(--fd);font-size:22px;font-weight:400;color:var(--ink);margin-bottom:6px">Olá, Daniela 👋</div>
+            <div style="font-size:14px;color:var(--ink3);line-height:1.8">Aqui é o seu espaço de comando. Use as abas abaixo para gerenciar sua rotina, consultar pautas e ver o calendário.</div>
+          </div>
+
+          <div style="font-family:var(--fm);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);margin-bottom:12px">Falar com o Chefe</div>
+
+          <div style="background:var(--w);border:1px solid var(--bdr);padding:18px;margin-bottom:10px">
+            <div style="font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px">💬 Abrir chat com o Chefe</div>
+            <div style="font-size:13px;color:var(--ink3);line-height:1.7;margin-bottom:14px">Converse diretamente com o Chefe Oficial no Claude — sugira pautas, peça roteiros, reporte números. É gratuito.</div>
+            <a href="https://claude.ai" target="_blank" style="display:block;background:var(--ink);color:var(--rose-l);text-align:center;padding:14px;font-family:var(--fm);font-size:10px;letter-spacing:.18em;text-transform:uppercase;text-decoration:none;border-radius:6px;margin-bottom:8px">Abrir Claude.ai →</a>
+            <div style="font-size:11.5px;color:var(--ink3);text-align:center">Gratuito · Sem instalar nada · Funciona no Safari</div>
+          </div>
+
+          <div style="background:var(--rose-bg);border:1px solid var(--rose-b);padding:16px;margin-bottom:10px">
+            <div style="font-family:var(--fm);font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--rose);margin-bottom:8px">Como usar</div>
+            <div style="font-size:13px;color:var(--ink2);line-height:1.85">
+              1. Abre o Claude.ai<br>
+              2. Seleciona o Project <strong>"Chefe · Daniela Gaia"</strong><br>
+              3. Escreve sua mensagem normalmente<br>
+              4. O Chefe já sabe tudo sobre você e responde como estrategista
+            </div>
+          </div>
+
+          <div style="font-family:var(--fm);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);margin:18px 0 12px">Atalhos rápidos</div>
+
+          <button onclick="copyPrompt('pauta')" class="qbtn">💡 Sugerir uma pauta</button>
+          <button onclick="copyPrompt('roteiro')" class="qbtn">🎬 Pedir roteiro</button>
+          <button onclick="copyPrompt('numeros')" class="qbtn">📊 Reportar meus números</button>
+          <button onclick="copyPrompt('travada')" class="qbtn">🆘 Estou travada</button>
+          <button onclick="copyPrompt('legenda')" class="qbtn">✍️ Preciso de uma legenda</button>
+
+          <div id="copyToast" style="display:none;background:var(--sage);color:#fff;text-align:center;padding:10px;border-radius:6px;margin-top:12px;font-size:13px">✓ Copiado! Cole no Claude.ai</div>
+
         </div>
       </div>
     </div>
@@ -308,20 +330,10 @@ textarea::placeholder { color:var(--ink3); }
   <div class="modal">
     <div class="mhead"><h3>Configurações</h3><button class="mclose" onclick="cm('mCfg')">×</button></div>
     <div class="mbody">
-      <div class="api-info">
-        <strong>Como ativar o chat:</strong><br>
-        1. Acesse <strong>console.anthropic.com</strong><br>
-        2. Crie uma conta gratuita com o Google<br>
-        3. Vá em <strong>API Keys → Create Key</strong><br>
-        4. Cole a chave abaixo e salve
-      </div>
       <label class="slabel">Seu nome</label>
       <input type="text" id="iNome" class="sinput" value="Daniela">
-      <label class="slabel">Chave de API Anthropic</label>
-      <input type="password" id="iKey" class="sinput" placeholder="sk-ant-api03-...">
-      <div class="shint">A chave fica salva só neste dispositivo, nunca é enviada para outros servidores.</div>
-      <button class="savebtn" id="savebtn" onclick="saveCfg()">Salvar configurações</button>
-      <div class="snote">Configurações salvas localmente neste dispositivo</div>
+      <button class="savebtn" id="savebtn" onclick="saveCfg()">Salvar</button>
+      <div class="snote">Configurações salvas neste dispositivo</div>
     </div>
   </div>
 </div>
@@ -691,6 +703,43 @@ document.addEventListener("click",function(e){
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\n/g,"<br>");}
 
 if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function(){});
+
+// ─── PROMPTS RÁPIDOS ───
+var PROMPTS = {
+  pauta: "Tenho uma ideia de pauta nova e quero debater com você antes de gravar. A ideia é: [ESCREVA SUA IDEIA AQUI]. O que acha do ângulo? Qual formato você sugere e qual serviço essa pauta abre caminho para vender?",
+  roteiro: "Preciso de um roteiro completo para gravar hoje. O tema é: [ESCREVA O TEMA AQUI]. Me dá o hook, o desenvolvimento com timecodes e uma legenda pronta com hashtags.",
+  numeros: "Vou te reportar os números desta semana para você analisar:\n\nSeguidores novos: \nMelhor alcance (post): \nMais salvamentos: \nMensagens sobre consultoria: \nO que foi difícil:\n\nMe diz o que está funcionando e o que ajustar.",
+  travada: "Estou travada e não sei o que postar hoje. O tema da semana é [TEMA]. Me dá UMA ideia específica e concreta para executar agora — com formato, ângulo e CTA.",
+  legenda: "Preciso de uma legenda para o post de hoje. É um [REEL / CARROSSEL / POST] sobre [ASSUNTO]. Me dá a legenda completa com CTA e hashtags relevantes."
+};
+
+function copyPrompt(tipo) {
+  var txt = PROMPTS[tipo] || "";
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(txt).then(function() { showToast(); }).catch(function() { fallbackCopy(txt); });
+  } else {
+    fallbackCopy(txt);
+  }
+}
+
+function fallbackCopy(txt) {
+  var ta = document.createElement("textarea");
+  ta.value = txt;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try { document.execCommand("copy"); showToast(); } catch(e) {}
+  document.body.removeChild(ta);
+}
+
+function showToast() {
+  var t = document.getElementById("copyToast");
+  if (!t) return;
+  t.style.display = "block";
+  setTimeout(function() { t.style.display = "none"; }, 2500);
+}
+
 </script>
 </body>
 </html>
