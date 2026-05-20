@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#FAFAF7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Chefe · Dani">
+<meta name="description" content="Sistema de conteúdo da Daniela Gaia — Chat com o Chefe, rotina semanal e pautas estratégicas.">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Chefe · Daniela Gaia</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Lato:wght@300;400;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-inner">
+    <div class="splash-logo">DG</div>
+    <div class="splash-title">Chefe Oficial</div>
+    <div class="splash-sub">Daniela Gaia</div>
+    <div class="splash-dots">
+      <div class="sd"></div><div class="sd"></div><div class="sd"></div>
+    </div>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div id="app" class="app-hidden">
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">DG</div>
+      <div class="topbar-info">
+        <div class="topbar-title">Chefe Oficial</div>
+        <div class="topbar-status"><span class="status-dot"></span>Online agora</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="icon-btn" id="weekBtn" title="Semana atual">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      </button>
+      <button class="icon-btn" id="settingsBtn" title="Configurações">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- ── CHAT VIEW ── -->
+    <section id="viewChat" class="view active">
+      <div class="chat-scroll" id="chatScroll">
+        <div class="chat-messages" id="chatMessages">
+          <!-- Mensagem inicial injetada via JS -->
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <div class="quick-chips" id="quickChips">
+          <button class="chip" onclick="quickSend('Tenho uma ideia de pauta: ')">💡 Sugerir pauta</button>
+          <button class="chip" onclick="quickSend('Preciso de roteiro para: ')">🎬 Pedir roteiro</button>
+          <button class="chip" onclick="quickSend('Meus números desta semana: ')">📊 Reportar números</button>
+          <button class="chip" onclick="quickSend('Estou travada, me ajuda com: ')">🆘 Estou travada</button>
+        </div>
+        <div class="input-row">
+          <textarea id="msgInput" class="msg-input" placeholder="Mensagem para o Chefe…" rows="1"
+            onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="send-btn" id="sendBtn" onclick="sendMsg()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── ROTINA VIEW ── -->
+    <section id="viewRotina" class="view">
+      <div class="view-scroll">
+        <div class="view-header">
+          <h2>Rotina da Semana</h2>
+          <div class="week-badge" id="weekBadge">Semana 1</div>
+        </div>
+
+        <div class="progress-card">
+          <div class="progress-label">
+            <span>Progresso semanal</span>
+            <span id="progressPct">0%</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+          <div id="progressMsg" class="progress-msg">Clique nas tarefas para marcar como feito</div>
+        </div>
+
+        <div class="day-list" id="dayList"></div>
+      </div>
+    </section>
+
+    <!-- ── PAUTAS VIEW ── -->
+    <section id="viewPautas" class="view">
+      <div class="view-scroll">
+        <div class="view-header">
+          <h2>Banco de Pautas</h2>
+          <div class="week-badge">Jun–Jul 2026</div>
+        </div>
+        <div class="pautas-list" id="pautasList"></div>
+      </div>
+    </section>
+
+    <!-- ── CALENDÁRIO VIEW ── -->
+    <section id="viewCal" class="view">
+      <div class="view-scroll">
+        <div class="view-header">
+          <h2>Calendário</h2>
+          <div class="month-nav">
+            <button class="nav-arrow" id="prevMonth">‹</button>
+            <span id="monthLabel">Junho 2026</span>
+            <button class="nav-arrow" id="nextMonth">›</button>
+          </div>
+        </div>
+        <div class="cal-container" id="calContainer"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="showView('chat', this)">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      <span>Chat</span>
+    </button>
+    <button class="nav-item" onclick="showView('rotina', this)">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      <span>Rotina</span>
+    </button>
+    <button class="nav-item" onclick="showView('pautas', this)">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      <span>Pautas</span>
+    </button>
+    <button class="nav-item" onclick="showView('cal', this)">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      <span>Calendário</span>
+    </button>
+  </nav>
+
+</div>
+
+<!-- MODAL SEMANA -->
+<div class="modal-overlay" id="weekModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Semana atual</h3>
+      <button class="modal-close" onclick="closeModal('weekModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--ink3);font-size:13px;margin-bottom:16px">Selecione a semana em andamento. Isso ajusta o contexto do Chefe.</p>
+      <div class="week-selector" id="weekSelector"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SETTINGS -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Configurações</h3>
+      <button class="modal-close" onclick="closeModal('settingsModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="setting-group">
+        <label class="setting-label">Seu nome</label>
+        <input type="text" id="settingNome" class="setting-input" value="Daniela" placeholder="Seu nome">
+      </div>
+      <div class="setting-group">
+        <label class="setting-label">Chave de API Anthropic</label>
+        <input type="password" id="settingApiKey" class="setting-input" placeholder="sk-ant-api03-...">
+        <div class="setting-hint">Obtenha em console.anthropic.com → API Keys</div>
+      </div>
+      <button class="save-btn" onclick="saveSettings()">Salvar configurações</button>
+      <div class="setting-note">As configurações ficam salvas só neste dispositivo.</div>
+    </div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
