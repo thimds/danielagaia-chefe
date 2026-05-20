@@ -6,185 +6,798 @@
 <meta name="theme-color" content="#FAFAF7">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Chefe · Dani">
-<meta name="description" content="Sistema de conteúdo da Daniela Gaia — Chat com o Chefe, rotina semanal e pautas estratégicas.">
+<meta name="apple-mobile-web-app-title" content="Chefe Dani">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
 <title>Chefe · Daniela Gaia</title>
-<link rel="stylesheet" href="css/app.css">
+<style>
+/* ── RESET ── */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#FAFAF7;color:#1A1A18;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+
+/* ── VARIÁVEIS ── */
+:root{
+  --bg:#FAFAF7;--w:#fff;--s2:#F4F2EE;--s3:#EDEAE4;
+  --border:#E8E4DC;--border2:#D6D0C4;
+  --ink:#1A1A18;--ink2:#4A4840;--ink3:#7A7670;
+  --gold:#9A7B4F;--gl:#C4A272;--gbg:#FDF8F0;--gb:#E8D5B0;
+  --sage:#5C7A6A;--sbg:#F0F5F2;
+  --blush:#9A5C5C;--bbg2:#FDF0F0;
+  --blue:#3D5A80;--blbg:#EEF2F8;
+  --green:#4A7C59;
+  --sh:0 1px 4px rgba(0,0,0,.07);
+}
+
+/* ── SPLASH ── */
+#splash{position:fixed;inset:0;background:#1A1A18;display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity .4s}
+#splash.out{opacity:0;pointer-events:none}
+.sp-logo{width:72px;height:72px;border:1.5px solid var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;font-size:22px;color:var(--gl);margin:0 auto 16px;letter-spacing:.05em}
+.sp-tag{font-family:'Courier New',monospace;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);text-align:center;margin-bottom:6px}
+.sp-name{font-family:Georgia,serif;font-size:24px;font-style:italic;color:#FAF8F4;text-align:center}
+.sp-dots{display:flex;gap:6px;justify-content:center;margin-top:24px}
+.sd{width:5px;height:5px;border-radius:50%;background:var(--gold);animation:sdp 1.2s infinite}
+.sd:nth-child(2){animation-delay:.2s}.sd:nth-child(3){animation-delay:.4s}
+@keyframes sdp{0%,100%{opacity:.3}50%{opacity:1}}
+
+/* ── APP ── */
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh;opacity:0;transition:opacity .3s}
+#app.show{opacity:1}
+
+/* ── TOPBAR ── */
+.topbar{height:60px;background:var(--w);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0}
+.tb-left{display:flex;align-items:center;gap:10px}
+.tb-logo{width:36px;height:36px;background:var(--ink);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;font-size:13px;color:var(--gl);flex-shrink:0}
+.tb-title{font-family:Georgia,serif;font-size:16px;color:var(--ink);line-height:1.2}
+.tb-status{display:flex;align-items:center;gap:5px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:.08em;color:var(--ink3);text-transform:uppercase}
+.sdot{width:6px;height:6px;border-radius:50%;background:#5BAD7A;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.tb-right{display:flex;gap:4px}
+.ibtn{width:36px;height:36px;background:none;border:none;cursor:pointer;color:var(--ink3);display:flex;align-items:center;justify-content:center;border-radius:50%;transition:.15s}
+.ibtn:hover{background:var(--s2);color:var(--ink)}
+
+/* ── VIEWS ── */
+.main{flex:1;overflow:hidden;position:relative}
+.view{position:absolute;inset:0;display:none;flex-direction:column}
+.view.active{display:flex}
+.vscroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.vheader{display:flex;align-items:center;justify-content:space-between;padding:18px 16px 12px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--w)}
+.vheader h2{font-family:Georgia,serif;font-size:21px;font-weight:400;color:var(--ink)}
+.wbadge{font-family:'Courier New',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:3px 9px;background:var(--gbg);border:1px solid var(--gb);color:var(--gold)}
+
+/* ── CHAT ── */
+#viewChat{background:var(--bg)}
+.cscroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 6px}
+.cmsgs{display:flex;flex-direction:column;gap:12px;min-height:100%;justify-content:flex-end}
+
+.mwrap{display:flex;gap:8px;align-items:flex-end;max-width:90%}
+.mwrap.chefe{align-self:flex-start}
+.mwrap.dani{align-self:flex-end;flex-direction:row-reverse}
+
+.mavatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;font-size:11px;flex-shrink:0;margin-bottom:2px}
+.mavatar.chefe{background:var(--ink);color:var(--gl)}
+.mavatar.dani{background:var(--gbg);border:1px solid var(--gb);color:var(--gold)}
+
+.mcontent{display:flex;flex-direction:column;gap:2px}
+.mname{font-family:'Courier New',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);padding:0 3px}
+.mwrap.dani .mname{text-align:right}
+
+.mbubble{padding:10px 13px;font-size:13.5px;line-height:1.75;color:var(--ink2);border-radius:4px 13px 13px 13px;background:var(--w);border:1px solid var(--border);box-shadow:var(--sh)}
+.mwrap.dani .mbubble{background:var(--gbg);border-color:var(--gb);border-radius:13px 4px 13px 13px}
+.mbubble strong{color:var(--ink)}.mbubble em{color:var(--gold);font-style:italic}
+.mbubble p{margin-bottom:6px}.mbubble p:last-child{margin-bottom:0}
+
+.sysmsg{text-align:center;font-family:'Courier New',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);padding:6px 0;position:relative}
+.sysmsg::before,.sysmsg::after{content:'';position:absolute;top:50%;width:calc(50% - 70px);height:1px;background:var(--border)}
+.sysmsg::before{left:0}.sysmsg::after{right:0}
+
+.typing{display:flex;gap:8px;align-items:flex-end;align-self:flex-start}
+.tdots{background:var(--w);border:1px solid var(--border);border-radius:4px 13px 13px 13px;padding:12px 14px;display:flex;gap:4px;align-items:center;box-shadow:var(--sh)}
+.td{width:5px;height:5px;border-radius:50%;background:var(--ink3);animation:bounce .8s infinite}
+.td:nth-child(2){animation-delay:.13s}.td:nth-child(3){animation-delay:.26s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+
+.cinput{background:var(--w);border-top:1px solid var(--border);padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));flex-shrink:0}
+.chips{display:flex;gap:6px;overflow-x:auto;margin-bottom:9px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{white-space:nowrap;background:var(--s2);border:1px solid var(--border);padding:5px 11px;font-size:11.5px;color:var(--ink2);cursor:pointer;border-radius:20px;transition:.15s;flex-shrink:0;font-family:inherit}
+.chip:hover{background:var(--gbg);border-color:var(--gb);color:var(--gold)}
+.irow{display:flex;gap:8px;align-items:flex-end}
+.minput{flex:1;background:var(--s2);border:1px solid var(--border2);padding:10px 13px;font-family:inherit;font-size:14px;color:var(--ink);resize:none;outline:none;line-height:1.5;min-height:44px;max-height:100px;border-radius:22px;transition:.2s}
+.minput:focus{border-color:var(--gl)}
+.minput::placeholder{color:var(--ink3)}
+.sbtn{width:44px;height:44px;background:var(--ink);border:none;cursor:pointer;color:var(--gl);display:flex;align-items:center;justify-content:center;border-radius:50%;transition:.15s;flex-shrink:0}
+.sbtn:hover{background:var(--gold);color:#fff}
+.sbtn:disabled{opacity:.4;cursor:default}
+
+/* ── ROTINA ── */
+.pcard{margin:12px;background:var(--w);border:1px solid var(--border);padding:14px;box-shadow:var(--sh)}
+.plabel{display:flex;justify-content:space-between;font-family:'Courier New',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:7px}
+.pbar{height:4px;background:var(--s3);border-radius:2px;overflow:hidden;margin-bottom:7px}
+.pfill{height:100%;background:var(--gold);border-radius:2px;width:0;transition:width .7s ease}
+.pmsg{font-size:11px;color:var(--ink3);font-style:italic}
+
+.daylist{padding:0 12px 20px}
+.daycard{background:var(--w);border:1px solid var(--border);margin-bottom:7px;overflow:hidden;box-shadow:var(--sh)}
+.daycard.today{border-top:2px solid var(--gold)}
+.daycard.done{opacity:.6}
+.dchead{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;cursor:pointer;user-select:none;transition:.15s}
+.dchead:active{background:var(--s2)}
+.dcleft{display:flex;align-items:center;gap:9px}
+.dccheck{width:20px;height:20px;border:1.5px solid var(--border2);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.2s}
+.daycard.done .dccheck{background:var(--sage);border-color:var(--sage)}
+.checkico{color:#fff;font-size:11px;display:none}
+.daycard.done .checkico{display:block}
+.dcday{font-family:'Courier New',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3);margin-bottom:2px}
+.daycard.today .dcday{color:var(--gold)}
+.dctitle{font-size:13px;font-weight:700;color:var(--ink)}
+.dcarrow{color:var(--ink3);transition:transform .25s;font-size:16px;line-height:1}
+.daycard.open .dcarrow{transform:rotate(180deg)}
+.dcbody{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.daycard.open .dcbody{max-height:500px}
+.dccontent{padding:0 13px 13px 42px;font-size:12.5px;color:var(--ink3);line-height:1.85;white-space:pre-wrap}
+
+/* ── PAUTAS ── */
+.plist{padding:12px}
+.pc{background:var(--w);border:1px solid var(--border);border-left:3px solid var(--gold);padding:15px;margin-bottom:9px;cursor:pointer;box-shadow:var(--sh);transition:.15s;position:relative}
+.pc.trend{border-left-color:var(--sage)}.pc.personal{border-left-color:var(--blush)}
+.pc:active{transform:translateY(-1px);box-shadow:0 3px 12px rgba(0,0,0,.1)}
+.ppri{position:absolute;top:11px;right:11px;font-family:'Courier New',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;background:var(--gbg);color:var(--gold);border:1px solid var(--gb);border-radius:2px}
+.ppri.trend{background:var(--sbg);color:var(--sage);border-color:var(--sage)}
+.ppri.personal{background:var(--bbg2);color:var(--blush);border-color:var(--blush)}
+.pwk{font-family:'Courier New',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:4px}
+.ptit{font-family:Georgia,serif;font-size:15px;font-weight:400;color:var(--ink);margin-bottom:5px;line-height:1.3;padding-right:58px}
+.pdesc{font-size:12px;color:var(--ink3);line-height:1.6;margin-bottom:9px}
+.ptags{display:flex;gap:5px;flex-wrap:wrap}
+.ptag{font-family:'Courier New',monospace;font-size:8px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border:1px solid var(--border);color:var(--ink3);border-radius:2px}
+.ptag.g{background:var(--gbg);color:var(--gold);border-color:var(--gb)}
+.ptag.s{background:var(--sbg);color:var(--sage);border-color:var(--sage)}
+.ptag.b{background:var(--blbg);color:var(--blue);border-color:var(--blue)}
+
+/* ── CALENDÁRIO ── */
+.mnav{display:flex;align-items:center;gap:9px;font-family:'Courier New',monospace;font-size:10px;letter-spacing:.08em;color:var(--ink3)}
+.narr{background:none;border:1px solid var(--border);color:var(--ink3);width:26px;height:26px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:.15s}
+.narr:hover{background:var(--s2)}
+.calcont{padding:12px}
+.calwdays{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:3px}
+.calwday{text-align:center;font-family:'Courier New',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);padding:3px 0}
+.caldays{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.calday{background:var(--w);border:1px solid var(--border);padding:5px 3px;min-height:62px}
+.calday.other{background:var(--s2);opacity:.5}
+.calday.today{border-top:2px solid var(--gold)}
+.calday.sun{background:var(--gbg)}
+.cdnum{font-family:'Courier New',monospace;font-size:9px;color:var(--ink3);margin-bottom:3px}
+.calday.today .cdnum{color:var(--gold);font-weight:700}
+.cev{font-size:8.5px;line-height:1.4;padding:2px 3px;border-left:2px solid;margin-bottom:2px;color:var(--ink2)}
+.cev.reel{border-color:#C4997A;background:rgba(196,153,122,.08)}
+.cev.blog{border-color:#5C7A6A;background:rgba(92,122,106,.08)}
+.cev.story{border-color:#9A7B4F;background:rgba(154,123,79,.08)}
+.cev.brief{border-color:#7A7670;color:var(--ink3);font-style:italic}
+
+/* ── BOTTOM NAV ── */
+.bnav{height:calc(64px + env(safe-area-inset-bottom,0px));padding-bottom:env(safe-area-inset-bottom,0px);background:var(--w);border-top:1px solid var(--border);display:flex;flex-shrink:0}
+.nitem{flex:1;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--ink3);transition:.15s;padding:8px 0;font-family:inherit}
+.nitem span{font-size:10px;letter-spacing:.03em}
+.nitem.active{color:var(--gold)}
+
+/* ── MODAIS ── */
+.moverlay{position:fixed;inset:0;background:rgba(26,26,24,.5);display:none;align-items:flex-end;justify-content:center;z-index:500}
+.moverlay.open{display:flex}
+.modal{background:var(--w);width:100%;max-width:480px;border-radius:16px 16px 0 0;padding-bottom:env(safe-area-inset-bottom,0px);max-height:80vh;overflow-y:auto;animation:sup .25s ease}
+@keyframes sup{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.mhead{display:flex;justify-content:space-between;align-items:center;padding:16px 18px 12px;border-bottom:1px solid var(--border)}
+.mhead h3{font-family:Georgia,serif;font-size:17px;font-weight:400;color:var(--ink)}
+.mclose{background:none;border:none;font-size:22px;color:var(--ink3);cursor:pointer;line-height:1;padding:4px}
+.mbody{padding:14px 18px}
+
+.wsel{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.wopt{padding:11px;background:var(--s2);border:1px solid var(--border);cursor:pointer;text-align:left;border-radius:4px;transition:.15s;font-family:inherit}
+.wopt:hover{background:var(--gbg);border-color:var(--gb)}
+.wopt.sel{background:var(--gbg);border-color:var(--gold)}
+.wonum{font-family:'Courier New',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:2px}
+.wotema{font-size:11.5px;color:var(--ink2);line-height:1.4}
+
+.sgrp{margin-bottom:14px}
+.slabel{display:block;font-family:'Courier New',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px}
+.sinput{width:100%;background:var(--s2);border:1px solid var(--border2);padding:10px 11px;font-family:inherit;font-size:14px;color:var(--ink);outline:none;border-radius:6px}
+.sinput:focus{border-color:var(--gl)}
+.shint{font-size:11px;color:var(--ink3);margin-top:3px;font-style:italic}
+.savebtn{width:100%;background:var(--ink);color:var(--gl);border:none;padding:12px;font-family:'Courier New',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;border-radius:6px;margin-bottom:9px;transition:.15s}
+.savebtn:hover{background:var(--gold);color:#fff}
+.savebtn.ok{background:var(--green);color:#fff}
+.snote{font-size:11px;color:var(--ink3);text-align:center}
+
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+</style>
 </head>
 <body>
 
 <!-- SPLASH -->
 <div id="splash">
-  <div class="splash-inner">
-    <div class="splash-logo">DG</div>
-    <div class="splash-title">Chefe Oficial</div>
-    <div class="splash-sub">Daniela Gaia</div>
-    <div class="splash-dots">
-      <div class="sd"></div><div class="sd"></div><div class="sd"></div>
-    </div>
+  <div>
+    <div class="sp-logo">DG</div>
+    <div class="sp-tag">Chefe Oficial</div>
+    <div class="sp-name">Daniela Gaia</div>
+    <div class="sp-dots"><div class="sd"></div><div class="sd"></div><div class="sd"></div></div>
   </div>
 </div>
 
-<!-- APP SHELL -->
-<div id="app" class="app-hidden">
-
-  <!-- TOP BAR -->
+<!-- APP -->
+<div id="app">
   <header class="topbar">
-    <div class="topbar-left">
-      <div class="topbar-logo">DG</div>
-      <div class="topbar-info">
-        <div class="topbar-title">Chefe Oficial</div>
-        <div class="topbar-status"><span class="status-dot"></span>Online agora</div>
+    <div class="tb-left">
+      <div class="tb-logo">DG</div>
+      <div>
+        <div class="tb-title">Chefe Oficial</div>
+        <div class="tb-status"><span class="sdot"></span>Online agora</div>
       </div>
     </div>
-    <div class="topbar-right">
-      <button class="icon-btn" id="weekBtn" title="Semana atual">
+    <div class="tb-right">
+      <button class="ibtn" id="weekBtn" title="Semana">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
       </button>
-      <button class="icon-btn" id="settingsBtn" title="Configurações">
+      <button class="ibtn" id="settingsBtn" title="Config">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
       </button>
     </div>
   </header>
 
-  <!-- MAIN CONTENT -->
-  <main class="main-content">
-
-    <!-- ── CHAT VIEW ── -->
-    <section id="viewChat" class="view active">
-      <div class="chat-scroll" id="chatScroll">
-        <div class="chat-messages" id="chatMessages">
-          <!-- Mensagem inicial injetada via JS -->
-        </div>
+  <main class="main">
+    <!-- CHAT -->
+    <section id="vChat" class="view active">
+      <div class="cscroll" id="cscroll">
+        <div class="cmsgs" id="cmsgs"></div>
       </div>
-      <div class="chat-input-area">
-        <div class="quick-chips" id="quickChips">
-          <button class="chip" onclick="quickSend('Tenho uma ideia de pauta: ')">💡 Sugerir pauta</button>
-          <button class="chip" onclick="quickSend('Preciso de roteiro para: ')">🎬 Pedir roteiro</button>
-          <button class="chip" onclick="quickSend('Meus números desta semana: ')">📊 Reportar números</button>
-          <button class="chip" onclick="quickSend('Estou travada, me ajuda com: ')">🆘 Estou travada</button>
+      <div class="cinput">
+        <div class="chips" id="chips">
+          <button class="chip" onclick="qs('Tenho uma ideia de pauta: ')">💡 Sugerir pauta</button>
+          <button class="chip" onclick="qs('Preciso de roteiro para: ')">🎬 Pedir roteiro</button>
+          <button class="chip" onclick="qs('Meus números desta semana: ')">📊 Reportar números</button>
+          <button class="chip" onclick="qs('Estou travada, me ajuda: ')">🆘 Estou travada</button>
         </div>
-        <div class="input-row">
-          <textarea id="msgInput" class="msg-input" placeholder="Mensagem para o Chefe…" rows="1"
-            onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-          <button class="send-btn" id="sendBtn" onclick="sendMsg()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z"/></svg>
+        <div class="irow">
+          <textarea id="msginput" class="minput" placeholder="Mensagem para o Chefe…" rows="1"
+            onkeydown="hkey(event)" oninput="arz(this)"></textarea>
+          <button class="sbtn" id="sbtn" onclick="sendMsg()">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z"/></svg>
           </button>
         </div>
       </div>
     </section>
 
-    <!-- ── ROTINA VIEW ── -->
-    <section id="viewRotina" class="view">
-      <div class="view-scroll">
-        <div class="view-header">
+    <!-- ROTINA -->
+    <section id="vRotina" class="view">
+      <div class="vscroll">
+        <div class="vheader">
           <h2>Rotina da Semana</h2>
-          <div class="week-badge" id="weekBadge">Semana 1</div>
+          <div class="wbadge" id="wbadge">Semana 1</div>
         </div>
-
-        <div class="progress-card">
-          <div class="progress-label">
-            <span>Progresso semanal</span>
-            <span id="progressPct">0%</span>
-          </div>
-          <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-          <div id="progressMsg" class="progress-msg">Clique nas tarefas para marcar como feito</div>
+        <div class="pcard">
+          <div class="plabel"><span>Progresso semanal</span><span id="ppct">0%</span></div>
+          <div class="pbar"><div class="pfill" id="pfill"></div></div>
+          <div class="pmsg" id="pmsg">Clique nas tarefas para marcar como feito</div>
         </div>
-
-        <div class="day-list" id="dayList"></div>
+        <div class="daylist" id="daylist"></div>
       </div>
     </section>
 
-    <!-- ── PAUTAS VIEW ── -->
-    <section id="viewPautas" class="view">
-      <div class="view-scroll">
-        <div class="view-header">
+    <!-- PAUTAS -->
+    <section id="vPautas" class="view">
+      <div class="vscroll">
+        <div class="vheader">
           <h2>Banco de Pautas</h2>
-          <div class="week-badge">Jun–Jul 2026</div>
+          <div class="wbadge">Jun–Jul 2026</div>
         </div>
-        <div class="pautas-list" id="pautasList"></div>
+        <div class="plist" id="plist"></div>
       </div>
     </section>
 
-    <!-- ── CALENDÁRIO VIEW ── -->
-    <section id="viewCal" class="view">
-      <div class="view-scroll">
-        <div class="view-header">
+    <!-- CALENDÁRIO -->
+    <section id="vCal" class="view">
+      <div class="vscroll">
+        <div class="vheader">
           <h2>Calendário</h2>
-          <div class="month-nav">
-            <button class="nav-arrow" id="prevMonth">‹</button>
-            <span id="monthLabel">Junho 2026</span>
-            <button class="nav-arrow" id="nextMonth">›</button>
+          <div class="mnav">
+            <button class="narr" id="prev">‹</button>
+            <span id="mlabel">Junho 2026</span>
+            <button class="narr" id="next">›</button>
           </div>
         </div>
-        <div class="cal-container" id="calContainer"></div>
+        <div class="calcont" id="calcont"></div>
       </div>
     </section>
-
   </main>
 
-  <!-- BOTTOM NAV -->
-  <nav class="bottom-nav">
-    <button class="nav-item active" onclick="showView('chat', this)">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+  <nav class="bnav">
+    <button class="nitem active" onclick="sv('Chat',this)">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
       <span>Chat</span>
     </button>
-    <button class="nav-item" onclick="showView('rotina', this)">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+    <button class="nitem" onclick="sv('Rotina',this)">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
       <span>Rotina</span>
     </button>
-    <button class="nav-item" onclick="showView('pautas', this)">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    <button class="nitem" onclick="sv('Pautas',this)">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       <span>Pautas</span>
     </button>
-    <button class="nav-item" onclick="showView('cal', this)">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    <button class="nitem" onclick="sv('Cal',this)">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
       <span>Calendário</span>
     </button>
   </nav>
-
 </div>
 
 <!-- MODAL SEMANA -->
-<div class="modal-overlay" id="weekModal">
+<div class="moverlay" id="mWeek">
   <div class="modal">
-    <div class="modal-header">
-      <h3>Semana atual</h3>
-      <button class="modal-close" onclick="closeModal('weekModal')">×</button>
-    </div>
-    <div class="modal-body">
-      <p style="color:var(--ink3);font-size:13px;margin-bottom:16px">Selecione a semana em andamento. Isso ajusta o contexto do Chefe.</p>
-      <div class="week-selector" id="weekSelector"></div>
+    <div class="mhead"><h3>Semana atual</h3><button class="mclose" onclick="cm('mWeek')">×</button></div>
+    <div class="mbody">
+      <p style="color:var(--ink3);font-size:13px;margin-bottom:14px">Selecione a semana em andamento para ajustar o contexto do Chefe.</p>
+      <div class="wsel" id="wsel"></div>
     </div>
   </div>
 </div>
 
 <!-- MODAL SETTINGS -->
-<div class="modal-overlay" id="settingsModal">
+<div class="moverlay" id="mSettings">
   <div class="modal">
-    <div class="modal-header">
-      <h3>Configurações</h3>
-      <button class="modal-close" onclick="closeModal('settingsModal')">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="setting-group">
-        <label class="setting-label">Seu nome</label>
-        <input type="text" id="settingNome" class="setting-input" value="Daniela" placeholder="Seu nome">
+    <div class="mhead"><h3>Configurações</h3><button class="mclose" onclick="cm('mSettings')">×</button></div>
+    <div class="mbody">
+      <div class="sgrp">
+        <label class="slabel">Seu nome</label>
+        <input type="text" id="sNome" class="sinput" value="Daniela" placeholder="Seu nome">
       </div>
-      <div class="setting-group">
-        <label class="setting-label">Chave de API Anthropic</label>
-        <input type="password" id="settingApiKey" class="setting-input" placeholder="sk-ant-api03-...">
-        <div class="setting-hint">Obtenha em console.anthropic.com → API Keys</div>
+      <div class="sgrp">
+        <label class="slabel">Chave de API Anthropic</label>
+        <input type="password" id="sKey" class="sinput" placeholder="sk-ant-api03-...">
+        <div class="shint">Obtenha em console.anthropic.com → API Keys</div>
       </div>
-      <button class="save-btn" onclick="saveSettings()">Salvar configurações</button>
-      <div class="setting-note">As configurações ficam salvas só neste dispositivo.</div>
+      <button class="savebtn" id="savebtn" onclick="saveSet()">Salvar configurações</button>
+      <div class="snote">Configurações salvas só neste dispositivo.</div>
     </div>
   </div>
 </div>
 
-<script src="js/data.js"></script>
-<script src="js/app.js"></script>
+<script>
+// ══════════════════════════════════════════
+//  DADOS
+// ══════════════════════════════════════════
+var SEMANAS = {
+  1:{tema:"Sua roupa te entrega ou te enterra?",mes:"Junho 2026",tarefas:[
+    {dia:"Segunda",emoji:"📬",titulo:"Planning da Semana",corpo:"Leia este e-mail inteiro. Separe o look para o Reel de terça — algo profissional, cor que te favoreça, fundo limpo. Defina onde vai gravar.\n\nResponda este e-mail com: 'Li. Semana 1 em andamento.' até as 09h."},
+    {dia:"Terça",emoji:"🎬",titulo:"Gravar Reel + TikTok",corpo:"TEMA: 3 erros de imagem que te fazem parecer menos competente\nDURAÇÃO: 30 a 40 segundos\n\nROTEIRO:\n[0–2s] 'Se você chega preparada mas não te levam a sério — pode ser isso.'\n[2–10s] Erro 1: Cores que apagam.\n[10–20s] Erro 2: Roupa sem intenção.\n[20–30s] Erro 3: Acessório ausente.\n[30–38s] 'Imagem não é vaidade. É comunicação.' CTA: Salva e comenta.\n\nEdita à tarde. 80% bom = pronto."},
+    {dia:"Quarta",emoji:"📤",titulo:"Publicar Reel + TikTok",corpo:"Posta às 11h ou 19h. Fica 30 minutos respondendo comentários — o algoritmo vê seu engajamento inicial e decide se amplifica."},
+    {dia:"Quinta",emoji:"✍️",titulo:"Escrever Blog",corpo:"PAUTA: 'O que sua roupa diz sobre você antes de você abrir a boca'\nMÍNIMO: 400 palavras\n\nESTRUTURA:\n1. Gancho — situação real\n2. O problema — por que profissionais são subestimadas visualmente\n3. Os 3 pilares: cor + silhueta + acessório\n4. CTA: Consultoria de Guarda-Roupa (R$499)"},
+    {dia:"Sexta",emoji:"📱",titulo:"Stories do Dia",corpo:"Escolha uma opção:\n\n(A) Bastidor: 'Montando um look com intenção' — 3 a 4 stories\n(B) Caixinha: 'Me manda sua maior dúvida sobre imagem profissional'\n(C) Link do blog com frase de destaque + 'link na bio'"},
+    {dia:"Sábado",emoji:"🖼️",titulo:"Post no Feed",corpo:"Carrossel ou post estático.\nSugestão: '3 looks para qualquer reunião de trabalho'\nLegenda com pergunta. CTA: 'Salva para não esquecer.'"},
+    {dia:"Domingo",emoji:"📊",titulo:"Análise + Feedback",corpo:"Responda o e-mail do Chefe com:\n1. Quantos seguidores novos?\n2. Melhor alcance?\n3. Mais salvamentos?\n4. Mensagem sobre consultoria?\n5. O que foi difícil?"}
+  ]},
+  2:{tema:"Coloração pessoal no inverno",mes:"Junho 2026",tarefas:[
+    {dia:"Segunda",emoji:"📬",titulo:"Planning + Enquete Stories",corpo:"Stories hoje: enquete 'Você sabe qual é a sua cartela de cores?' Separe 2 peças de cores diferentes para o Reel — uma que te favorece e uma que apaga."},
+    {dia:"Terça",emoji:"🎬",titulo:"Gravar Reel — Coloração",corpo:"TEMA: Como saber se a cor te favorece em 10 segundos\n\nROTEIRO:\n[0–2s] 'Você sabe por que tem cores que te iluminam e outras que te apagam?'\n[2–15s] O teste: coloca na frente do rosto na luz natural.\n[15–30s] 'Isso tem nome: coloração pessoal.'\n[30–42s] CTA: 'Comenta QUERO SABER MINHAS CORES que eu explico a consultoria.'\n\nLEGENDA: Quantas vezes você comprou uma cor ótima na loja e em casa não funcionou? 🎨 #coloracaopessoal #danielagaia"},
+    {dia:"Quarta",emoji:"📤",titulo:"Reel + Carrossel",corpo:"Além do Reel, sobe um carrossel: '4 cartelas de cores — qual é a sua?'\n5 slides: Capa + 4 estações com tons de exemplo.\nLegenda: 'Qual dessas mais tem a ver com você? Salva 📌'"},
+    {dia:"Quinta",emoji:"✍️",titulo:"Blog Coloração Pessoal",corpo:"PAUTA: 'Coloração pessoal no outono/inverno'\n600–800 palavras. Vai ranquear no Google para 'coloração pessoal SP'.\nESTRUTURA: o que é → 4 estações → o que muda → CTA Coloração (R$299)"},
+    {dia:"Sexta",emoji:"💰",titulo:"CTA — Análise de Coloração",corpo:"3 stories vendendo diretamente:\n(1) 'Você sabe quais cores te fazem parecer cansada mesmo descansada?'\n(2) 'A Análise de Coloração descobre exatamente suas cores. 2h, presencial SP, R$299+'\n(3) 'Manda CORES aqui no direct.'\n\nSem vergonha. É o seu trabalho."},
+    {dia:"Sábado",emoji:"🖼️",titulo:"Carrossel de Autoridade",corpo:"'Como a cor errada sabota sua imagem profissional' — 4 a 6 slides explicando o impacto visual de cores inadequadas vs. cores da cartela."},
+    {dia:"Domingo",emoji:"📊",titulo:"Análise Semana 2",corpo:"Responda com:\n1. O carrossel ou o Reel teve mais salvamentos?\n2. Alguém mandou 'CORES' no direct?\n3. O que as pessoas mais comentaram?\n4. Você se sentiu mais segura para gravar?"}
+  ]},
+  3:{tema:"O blazer certo muda tudo",mes:"Junho 2026",tarefas:[
+    {dia:"Segunda",emoji:"📬",titulo:"Planning + Caixinha Stories",corpo:"Stories hoje: 'Me manda foto do seu look de trabalho. Vou responder os mais interessantes aqui essa semana.'\n\nSepare 2 ou 3 blazers para o Reel de terça."},
+    {dia:"Terça",emoji:"🎬",titulo:"Gravar Reel — Blazer",corpo:"TEMA: O blazer certo muda tudo — como escolher o seu\n\nROTEIRO:\n[0–2s] 'O blazer errado pode te fazer parecer que está usando o casaco da mãe.'\n[2–12s] Blazer estruturado, ombro no lugar certo = silhueta alongada.\n[12–25s] Cor da cartela + comprimento certo para sua proporção.\n[25–38s] 'Um blazer bem escolhido substitui o cinto, o colar e o sapato.' CTA: 'Você tem blazer que te favorece de verdade?'"},
+    {dia:"Quarta",emoji:"📤",titulo:"Reel + Responde Looks",corpo:"Posta o Reel. Depois dedica 15 min para responder nos Stories fotos que as seguidoras mandaram. Mesmo que só 2 ou 3 — responda todas."},
+    {dia:"Quinta",emoji:"✍️",titulo:"Blog 5 Peças de Inverno",corpo:"PAUTA: '5 peças de inverno que toda profissional precisa ter'\nAS 5: blazer estruturado + calça alfaiataria + tricô de qualidade + bota cano médio + acessório quente intencional.\nCTA: Consultoria de Guarda-Roupa (R$499)"},
+    {dia:"Sexta",emoji:"🖼️",titulo:"Carrossel no Feed",corpo:"'3 looks com 5 peças' — cada slide: 1 look com lista das peças e dica da Dani.\nLegenda: 'Salva aqui que você vai usar isso amanhã de manhã 📌'"},
+    {dia:"Sábado",emoji:"📱",titulo:"Stories de Bastidor",corpo:"Mostra como você montou um dos looks do carrossel. Humaniza — mostra que você passa pelo mesmo processo que as clientes."},
+    {dia:"Domingo",emoji:"📊",titulo:"Análise Semana 3",corpo:"Responda com:\n1. A audiência mandou looks? Quantos?\n2. Qual post teve mais engajamento?\n3. Alguém perguntou sobre consultoria?\n4. Seguidores vs. início?"}
+  ]},
+  4:{tema:"Acessórios como protagonistas",mes:"Junho 2026",tarefas:[
+    {dia:"Segunda",emoji:"📬",titulo:"Planning + Mood Board",corpo:"Stories hoje: mood board de acessórios de inverno — lenços, broches, colares longos.\nPergunta: 'Você usa acessórios com intenção ou coloca qualquer coisa?'"},
+    {dia:"Terça",emoji:"🎬",titulo:"Gravar Reel — Acessórios",corpo:"TEMA: O acessório certo eleva qualquer look básico — 3 exemplos\n\nROTEIRO:\n[0–2s] 'Você não precisa de roupa nova. Você precisa de um acessório com intenção.'\n[2–15s] Ex 1: blusa branca + colar = presença imediata.\n[15–28s] Ex 2: blazer + broche = personalidade e memória visual.\n[28–40s] Ex 3: tricô + lenço = sofisticação em 30 segundos. CTA: 'Salva e me conta qual dos 3 vai testar.'\n\nLEGENDA: Guarda-roupa cheio mas nada para usar? Às vezes falta um acessório, não uma peça nova. #acessorios #danielagaia"},
+    {dia:"Quarta",emoji:"📤",titulo:"Publicar Reel + TikTok",corpo:"Posta nos dois canais. 30 min de engajamento. Se alguém marcar uma amiga, responda — isso amplifica o alcance."},
+    {dia:"Quinta",emoji:"✍️",titulo:"Blog Acessórios",corpo:"PAUTA: 'Lenços, broches e colares — como construir imagem com acessórios'\nContextualiza tendência OI 2026. Explica como usar cada tipo com intenção.\nCTA: Consultoria de Guarda-Roupa."},
+    {dia:"Sexta",emoji:"💰",titulo:"CTA — Guarda-Roupa",corpo:"3 stories:\n(1) 'Seu closet está cheio mas nada funciona junto?'\n(2) 'A Consultoria de Guarda-Roupa resolve isso. 3h, presencial SP, R$499+'\n(3) 'Manda CLOSET aqui no direct.'"},
+    {dia:"Sábado",emoji:"🖼️",titulo:"Carrossel Fechamento do Mês",corpo:"'Os melhores looks do mês' ou 'O que aprendi sobre imagem em junho' — carrossel que resume os temas e serve de portfólio para novos seguidores."},
+    {dia:"Domingo",emoji:"📊",titulo:"Análise de JUNHO Completa",corpo:"Análise do mês inteiro:\n1. Seguidores em 01/06 vs. hoje\n2. Melhor Reel do mês\n3. Mensagens sobre consultoria\n4. Agendou consultoria pelo conteúdo?\n5. O que quer mudar em julho?"}
+  ]}
+};
+
+var PAUTAS = [
+  {tipo:"hot",semana:"Outono/Inverno 2026",titulo:"Acessórios protagonistas: lenços e broches sobre tricô",desc:"Tendência confirmada nas passarelas internacionais. Alto salvamento.",tags:["Reel","Carrossel","Blog"],tts:["g","b",""]},
+  {tipo:"trend",semana:"Comportamento · Qualquer semana",titulo:"Power Dressing 2026: ombreiras voltaram — e o que isso diz sobre você",desc:"Estética dos anos 80 com nova leitura. Ótimo ângulo corporativo.",tags:["Reel","Blog"],tts:["g",""]},
+  {tipo:"personal",semana:"Pessoal · Quando sentir confortável",titulo:"Voltei ao trabalho depois do bebê — e minha imagem parou de funcionar",desc:"Sua história real. Altíssimo potencial emocional. Mães em transição.",tags:["Reel pessoal","Blog"],tts:["g",""]},
+  {tipo:"trend",semana:"TikTok 2026 · Alta performance",titulo:'"Chá de realidade": o que sua imagem comunica de verdade',desc:"Tendência dominante TikTok 2026 — autenticidade sem filtro.",tags:["TikTok","Reel"],tts:["g","s"]},
+  {tipo:"hot",semana:"Sazonal · Julho 2026",titulo:"Mala perfeita para julho: viaje com menos e chegue impecável",desc:"Alto volume de busca. Abre venda do serviço Mala Express (R$299).",tags:["Reel","Carrossel"],tts:["g","b"]},
+  {tipo:"trend",semana:"Internacional · Julho",titulo:"O que executivas europeias usam para parecer poderosas",desc:"Quiet luxury para a brasileira. Autoridade pelo IED Milano.",tags:["Reel","Blog"],tts:["g",""]},
+  {tipo:"hot",semana:"Produto · Alta conversão",titulo:"Achadinhos de inverno: peças até R$200 que parecem o dobro",desc:"Alto alcance orgânico. Inclui lojas físicas de SP.",tags:["Reel","Stories"],tts:["g","s"]}
+];
+
+var CAL = {
+  "2026-06":{"2":[{t:"brief",tx:"Briefing S1"},{t:"story",tx:"Planning Stories"}],"3":[{t:"reel",tx:"Grava: 3 erros"}],"4":[{t:"reel",tx:"Posta Reel+TikTok"}],"5":[{t:"blog",tx:"Blog: sua roupa"}],"6":[{t:"story",tx:"Stories bastidor"}],"8":[{t:"brief",tx:"Análise S1+S2"}],"9":[{t:"story",tx:"Enquete cartela"}],"10":[{t:"reel",tx:"Grava: cor 10s"}],"11":[{t:"reel",tx:"Reel+Carrossel"}],"12":[{t:"blog",tx:"Blog coloração"}],"13":[{t:"story",tx:"CTA coloração"}],"15":[{t:"brief",tx:"Análise S2+S3"}],"16":[{t:"story",tx:"Caixinha looks"}],"17":[{t:"reel",tx:"Grava: blazer"}],"18":[{t:"reel",tx:"Reel+responde"}],"19":[{t:"blog",tx:"Blog 5 peças"}],"20":[{t:"story",tx:"Carrossel looks"}],"22":[{t:"brief",tx:"Análise S3+S4"}],"23":[{t:"story",tx:"Mood board"}],"24":[{t:"reel",tx:"Grava: acessórios"}],"25":[{t:"reel",tx:"Posta Reel+TikTok"}],"26":[{t:"blog",tx:"Blog acessórios"}],"27":[{t:"story",tx:"CTA guarda-roupa"}],"29":[{t:"brief",tx:"Análise junho"}]},
+  "2026-07":{"6":[{t:"story",tx:"Caixinha compras"}],"7":[{t:"reel",tx:"Grava: compra"}],"8":[{t:"reel",tx:"Reel+Carrossel"}],"9":[{t:"blog",tx:"Blog personal shop"}],"10":[{t:"story",tx:"Bastidor shopping"}],"12":[{t:"brief",tx:"Análise S5+S6"}],"13":[{t:"story",tx:"Pergunta imagem"}],"14":[{t:"reel",tx:"Grava: LinkedIn"}],"15":[{t:"reel",tx:"Posta Reel+TikTok"}],"16":[{t:"blog",tx:"Blog corporativo"}],"17":[{t:"story",tx:"Antes/depois"}],"19":[{t:"brief",tx:"Análise S6+S7"}],"20":[{t:"story",tx:"Enquete viagem"}],"21":[{t:"reel",tx:"Grava: mala"}],"22":[{t:"reel",tx:"Reel+CTA mala"}],"23":[{t:"blog",tx:"Blog viagem negócios"}],"24":[{t:"story",tx:"Checklist mala"}],"26":[{t:"brief",tx:"Análise S7+S8"}],"27":[{t:"story",tx:"2 meses de rotina"}],"28":[{t:"reel",tx:"Grava: posicionamento"}],"29":[{t:"reel",tx:"Posta Reel+TikTok"}],"30":[{t:"blog",tx:"Blog: o que mudou"}],"31":[{t:"story",tx:"Convite agosto"}]}
+};
+
+var SYSTEM = 'Voce e o "Chefe Oficial" da Daniela Gaia — consultora de imagem e coloracao pessoal em Sao Paulo (@danielagaia).\n\nServicos: Coloracao (R$299+), Guarda-Roupa (R$499+), Personal Shopping (R$599+), Imagem Corporativa (R$1.200+), Mala (R$299+).\nPublico: mulheres profissionais 30-50 anos, SP.\nPostura: direto, exigente mas que acredita nela. Linguagem brasileira natural. Maximo 180 palavras.\n\nQuando sugerir pauta: analise angulo, melhore, aponte formato e CTA.\nQuando pedir roteiro: entregue com hook, timecodes, legenda pronta.\nQuando reportar numeros: analise, explique por que, ajuste proximo passo.\nQuando travada: de UMA ideia especifica baseada no tema atual.\nSempre comece com "Daniela,"';
+
+// ══════════════════════════════════════════
+//  ESTADO
+// ══════════════════════════════════════════
+var S = { semana:1, checklist:{}, hist:[], apiKey:"", nome:"Daniela", cal:"2026-06", typing:false };
+
+function load() {
+  try {
+    var d = localStorage.getItem("dg2");
+    if(d){ var p=JSON.parse(d); S.semana=p.semana||1; S.checklist=p.checklist||{}; S.nome=p.nome||"Daniela"; }
+    var k = localStorage.getItem("dg2key");
+    if(k) S.apiKey=k;
+    var ni = document.getElementById("sNome");
+    var ki = document.getElementById("sKey");
+    if(ni) ni.value = S.nome;
+    if(ki) ki.value = S.apiKey;
+  } catch(e){}
+}
+
+function save() {
+  try {
+    localStorage.setItem("dg2", JSON.stringify({semana:S.semana,checklist:S.checklist,nome:S.nome}));
+    if(S.apiKey) localStorage.setItem("dg2key", S.apiKey);
+  } catch(e){}
+}
+
+// ══════════════════════════════════════════
+//  BOOT — aqui está o fix do splash
+// ══════════════════════════════════════════
+function boot() {
+  load();
+  initChat();
+  renderRotina();
+  renderPautas();
+  renderCal();
+  setupEvents();
+
+  // Esconde splash e mostra app
+  setTimeout(function(){
+    var sp = document.getElementById("splash");
+    var ap = document.getElementById("app");
+    if(sp) sp.classList.add("out");
+    if(ap) ap.classList.add("show");
+  }, 1200);
+}
+
+// Dispara assim que o DOM estiver pronto — não espera imagens ou fontes
+if(document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", boot);
+} else {
+  boot();
+}
+
+// ══════════════════════════════════════════
+//  VIEWS
+// ══════════════════════════════════════════
+function sv(name, btn) {
+  document.querySelectorAll(".view").forEach(function(v){ v.classList.remove("active"); });
+  document.querySelectorAll(".nitem").forEach(function(b){ b.classList.remove("active"); });
+  var el = document.getElementById("v"+name);
+  if(el) el.classList.add("active");
+  if(btn) btn.classList.add("active");
+  if(name==="Chat") scrollBot();
+}
+
+// ══════════════════════════════════════════
+//  CHAT
+// ══════════════════════════════════════════
+function initChat() {
+  var c = document.getElementById("cmsgs");
+  if(!c) return;
+  c.innerHTML = "";
+  addSys("Início da conversa · " + (SEMANAS[S.semana]?SEMANAS[S.semana].mes:"Junho 2026"));
+  addChefe("<p><strong>"+S.nome+",</strong></p><p>Aqui é o seu espaço para debater pautas, pedir roteiros e reportar números.</p><p>Use os atalhos abaixo ou escreva diretamente. <em>A única resposta errada é não responder.</em></p>");
+}
+
+function addSys(txt) {
+  var c = document.getElementById("cmsgs");
+  if(!c) return;
+  var d = document.createElement("div");
+  d.className = "sysmsg";
+  d.textContent = txt;
+  c.appendChild(d);
+}
+
+function addChefe(html) {
+  var c = document.getElementById("cmsgs");
+  if(!c) return;
+  var d = document.createElement("div");
+  d.className = "mwrap chefe";
+  d.innerHTML = '<div class="mavatar chefe">C</div><div class="mcontent"><div class="mname">Chefe Oficial</div><div class="mbubble">'+html+'</div></div>';
+  c.appendChild(d);
+  scrollBot();
+}
+
+function addDani(txt) {
+  var c = document.getElementById("cmsgs");
+  if(!c) return;
+  var d = document.createElement("div");
+  d.className = "mwrap dani";
+  d.innerHTML = '<div class="mavatar dani">D</div><div class="mcontent"><div class="mname">'+S.nome+'</div><div class="mbubble"><p>'+esc(txt)+'</p></div></div>';
+  c.appendChild(d);
+  scrollBot();
+}
+
+function showTyping() {
+  var c = document.getElementById("cmsgs");
+  if(!c) return;
+  var d = document.createElement("div");
+  d.className = "typing"; d.id = "tdots";
+  d.innerHTML = '<div class="mavatar chefe">C</div><div class="tdots"><div class="td"></div><div class="td"></div><div class="td"></div></div>';
+  c.appendChild(d);
+  scrollBot();
+}
+
+function hideTyping() {
+  var el = document.getElementById("tdots");
+  if(el) el.remove();
+}
+
+function scrollBot() {
+  setTimeout(function(){
+    var s = document.getElementById("cscroll");
+    if(s) s.scrollTop = s.scrollHeight;
+  }, 50);
+}
+
+function qs(txt) { var i=document.getElementById("msginput"); if(i){i.value=txt;i.focus();arz(i);} }
+function hkey(e) { if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMsg();} }
+function arz(el) { el.style.height="auto"; el.style.height=Math.min(el.scrollHeight,100)+"px"; }
+
+function fmt(t) {
+  return "<p>"+t.replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>").replace(/\*(.*?)\*/g,"<em>$1</em>").replace(/\n\n/g,"</p><p>").replace(/\n/g,"<br>")+"</p>";
+}
+
+function sendMsg() {
+  var inp = document.getElementById("msginput");
+  var txt = inp ? inp.value.trim() : "";
+  if(!txt || S.typing) return;
+  S.typing = true;
+  var sbtn = document.getElementById("sbtn");
+  if(sbtn) sbtn.disabled = true;
+  inp.value = ""; inp.style.height = "auto";
+
+  addDani(txt);
+  S.hist.push({role:"user",content:txt});
+
+  var sem = SEMANAS[S.semana];
+  var ctx = sem ? "\n\nContexto atual: Semana "+S.semana+" — Tema: \""+sem.tema+"\"" : "";
+
+  showTyping();
+
+  if(!S.apiKey) {
+    setTimeout(function(){
+      hideTyping();
+      addChefe("<p><strong>"+S.nome+",</strong></p><p>Configure sua chave de API nas configurações (ícone ⚙️) para eu responder em tempo real.</p>");
+      S.typing=false; if(sbtn) sbtn.disabled=false;
+    }, 800);
+    return;
+  }
+
+  fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:SYSTEM+ctx,messages:S.hist})
+  })
+  .then(function(r){return r.json();})
+  .then(function(data){
+    hideTyping();
+    var rep = (data.content&&data.content[0])?data.content[0].text:"Erro ao obter resposta.";
+    S.hist.push({role:"assistant",content:rep});
+    addChefe(fmt(rep));
+  })
+  .catch(function(){
+    hideTyping();
+    addChefe("<p>Erro de conexão. Verifique sua internet e tente novamente.</p>");
+  })
+  .finally(function(){
+    S.typing=false; if(sbtn) sbtn.disabled=false;
+    var i=document.getElementById("msginput"); if(i) i.focus();
+  });
+}
+
+// ══════════════════════════════════════════
+//  ROTINA
+// ══════════════════════════════════════════
+function renderRotina() {
+  var sem = SEMANAS[S.semana];
+  var wb = document.getElementById("wbadge");
+  if(wb && sem) wb.textContent = "Semana "+S.semana+" · "+sem.mes;
+
+  var list = document.getElementById("daylist");
+  if(!list || !sem) return;
+  list.innerHTML = "";
+
+  var hojeIdx = new Date().getDay(); // 0=Dom
+  var diaMap = {1:"Segunda",2:"Terça",3:"Quarta",4:"Quinta",5:"Sexta",6:"Sábado",0:"Domingo"};
+  var hoje = diaMap[hojeIdx];
+
+  sem.tarefas.forEach(function(t){
+    var key = S.semana+"-"+t.dia;
+    var done = !!S.checklist[key];
+    var isHoje = t.dia===hoje;
+
+    var card = document.createElement("div");
+    card.className = "daycard"+(isHoje?" today":"")+(done?" done":"");
+    card.innerHTML =
+      '<div class="dchead">'
+      +'<div class="dcleft">'
+      +'<div class="dccheck"><span class="checkico">✓</span></div>'
+      +'<div><div class="dcday">'+t.dia+'</div><div class="dctitle">'+t.emoji+' '+t.titulo+'</div></div>'
+      +'</div>'
+      +'<div class="dcarrow">▾</div>'
+      +'</div>'
+      +'<div class="dcbody"><div class="dccontent">'+esc(t.corpo)+'</div></div>';
+
+    card.querySelector(".dchead").addEventListener("click", function(){
+      var k = S.semana+"-"+t.dia;
+      // toggle feito ao clicar no check
+      card.classList.toggle("open");
+    });
+
+    card.querySelector(".dccheck").addEventListener("click", function(e){
+      e.stopPropagation();
+      var k = S.semana+"-"+t.dia;
+      S.checklist[k] = !S.checklist[k];
+      card.classList.toggle("done", S.checklist[k]);
+      save();
+      updProg();
+    });
+
+    list.appendChild(card);
+  });
+  updProg();
+}
+
+function updProg() {
+  var sem = SEMANAS[S.semana];
+  if(!sem) return;
+  var total = sem.tarefas.length;
+  var done = sem.tarefas.filter(function(t){ return !!S.checklist[S.semana+"-"+t.dia]; }).length;
+  var pct = Math.round(done/total*100);
+  var fill = document.getElementById("pfill");
+  var pctEl = document.getElementById("ppct");
+  var msg = document.getElementById("pmsg");
+  if(fill) fill.style.width = pct+"%";
+  if(pctEl) pctEl.textContent = pct+"%";
+  if(msg) msg.textContent = pct===0?"Clique nas tarefas para marcar como feito":pct<50?"Bom começo! Continue.":pct<100?"Quase lá!":"🎯 Semana completa!";
+}
+
+// ══════════════════════════════════════════
+//  PAUTAS
+// ══════════════════════════════════════════
+function renderPautas() {
+  var list = document.getElementById("plist");
+  if(!list) return;
+  list.innerHTML = "";
+  PAUTAS.forEach(function(p){
+    var card = document.createElement("div");
+    card.className = "pc"+(p.tipo==="trend"?" trend":p.tipo==="personal"?" personal":"");
+    var priTxt = p.tipo==="hot"?"🔥 Prioridade":p.tipo==="trend"?"📈 Trend":"💜 Pessoal";
+    var priCls = p.tipo==="trend"?"trend":p.tipo==="personal"?"personal":"";
+    var tagsHtml = p.tags.map(function(t,i){ return '<span class="ptag '+(p.tts[i]||'')+'">'+t+'</span>'; }).join("");
+    card.innerHTML =
+      '<div class="ppri '+priCls+'">'+priTxt+'</div>'
+      +'<div class="pwk">'+p.semana+'</div>'
+      +'<div class="ptit">'+p.titulo+'</div>'
+      +'<div class="pdesc">'+p.desc+'</div>'
+      +'<div class="ptags">'+tagsHtml+'</div>';
+    card.addEventListener("click", function(){
+      sv("Chat", document.querySelector(".nitem"));
+      document.querySelectorAll(".nitem").forEach(function(b,i){ b.classList.toggle("active",i===0); });
+      qs('Quero debater a pauta: "'+p.titulo+'"');
+    });
+    list.appendChild(card);
+  });
+}
+
+// ══════════════════════════════════════════
+//  CALENDÁRIO
+// ══════════════════════════════════════════
+function renderCal() {
+  var cont = document.getElementById("calcont");
+  if(!cont) return;
+  var parts = S.cal.split("-");
+  var ano = parseInt(parts[0]), mes = parseInt(parts[1]);
+  var meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  var ml = document.getElementById("mlabel");
+  if(ml) ml.textContent = meses[mes-1]+" "+ano;
+
+  var primDia = new Date(ano,mes-1,1).getDay();
+  var diasMes = new Date(ano,mes,0).getDate();
+  var hoje = new Date();
+  var hojeStr = ano+"-"+String(mes).padStart(2,"0")+"-"+String(hoje.getDate()).padStart(2,"0");
+  var evs = CAL[S.cal]||{};
+  var dias = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+
+  var h = '<div class="calwdays">'+dias.map(function(d){return '<div class="calwday">'+d+'</div>';}).join("")+'</div>';
+  h += '<div class="caldays">';
+
+  var diasAntes = primDia;
+  var diasAntesMes = new Date(ano, mes-2, 0).getDate();
+  for(var i=diasAntes-1;i>=0;i--) h+='<div class="calday other"><div class="cdnum">'+(diasAntesMes-i)+'</div></div>';
+
+  for(var d=1;d<=diasMes;d++){
+    var dsem=(primDia+d-1)%7;
+    var ds=ano+"-"+String(mes).padStart(2,"0")+"-"+String(d).padStart(2,"0");
+    var cls="calday"+(dsem===0?" sun":"")+(ds===hojeStr?" today":"");
+    var ev=evs[String(d)]||[];
+    h+='<div class="'+cls+'"><div class="cdnum">'+d+'</div>';
+    ev.slice(0,2).forEach(function(e){ h+='<div class="cev '+e.t+'">'+e.tx+'</div>'; });
+    if(ev.length>2) h+='<div class="cev" style="color:var(--ink3);font-size:8px">+'+(ev.length-2)+'</div>';
+    h+='</div>';
+  }
+
+  var total=diasAntes+diasMes;
+  var rest=total%7===0?0:7-(total%7);
+  for(var r=1;r<=rest;r++) h+='<div class="calday other"><div class="cdnum">'+r+'</div></div>';
+  h+='</div>';
+  cont.innerHTML=h;
+}
+
+// ══════════════════════════════════════════
+//  MODAIS
+// ══════════════════════════════════════════
+function setupEvents() {
+  var wb = document.getElementById("weekBtn");
+  var sb = document.getElementById("settingsBtn");
+  var pr = document.getElementById("prev");
+  var nx = document.getElementById("next");
+  if(wb) wb.addEventListener("click", function(){ renderWsel(); om("mWeek"); });
+  if(sb) sb.addEventListener("click", function(){ om("mSettings"); });
+  if(pr) pr.addEventListener("click", function(){
+    var p=S.cal.split("-"); var d=new Date(parseInt(p[0]),parseInt(p[1])-2,1);
+    S.cal=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); renderCal();
+  });
+  if(nx) nx.addEventListener("click", function(){
+    var p=S.cal.split("-"); var d=new Date(parseInt(p[0]),parseInt(p[1]),1);
+    S.cal=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); renderCal();
+  });
+  document.querySelectorAll(".moverlay").forEach(function(o){
+    o.addEventListener("click", function(e){ if(e.target===o) o.classList.remove("open"); });
+  });
+}
+
+function renderWsel() {
+  var sel = document.getElementById("wsel");
+  if(!sel) return;
+  sel.innerHTML = "";
+  Object.keys(SEMANAS).forEach(function(num){
+    var dados = SEMANAS[num];
+    var btn = document.createElement("button");
+    btn.className = "wopt"+(String(S.semana)===num?" sel":"");
+    btn.innerHTML = '<div class="wonum">Semana '+num+'</div><div class="wotema">'+dados.tema+'</div>';
+    btn.addEventListener("click", function(){
+      S.semana=parseInt(num); save(); renderRotina(); initChat(); cm("mWeek");
+    });
+    sel.appendChild(btn);
+  });
+}
+
+function om(id){ var el=document.getElementById(id); if(el) el.classList.add("open"); }
+function cm(id){ var el=document.getElementById(id); if(el) el.classList.remove("open"); }
+
+function saveSet() {
+  var n=document.getElementById("sNome"); var k=document.getElementById("sKey");
+  if(n&&n.value.trim()) S.nome=n.value.trim();
+  if(k&&k.value.trim()) S.apiKey=k.value.trim();
+  save();
+  var btn=document.getElementById("savebtn");
+  if(btn){ btn.textContent="✓ Salvo!"; btn.classList.add("ok");
+    setTimeout(function(){ btn.textContent="Salvar configurações"; btn.classList.remove("ok"); cm("mSettings"); },1400);
+  }
+}
+
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\n/g,"<br>"); }
+
+// Service worker
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js").catch(function(){});
+}
+</script>
 </body>
 </html>
