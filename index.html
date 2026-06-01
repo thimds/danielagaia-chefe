@@ -199,6 +199,45 @@ textarea::placeholder { color:var(--ink3); }
 
 ::-webkit-scrollbar { width:3px; height:3px; }
 ::-webkit-scrollbar-thumb { background:var(--bdr2); border-radius:2px; }
+
+/* Calendário expandível */
+.calday { cursor:pointer; transition:.12s; }
+.calday:hover { background:var(--rose-bg) !important; }
+.calday.other { cursor:default; pointer-events:none; }
+
+/* Modal de detalhe do dia */
+.day-modal { position:fixed; inset:0; background:rgba(44,34,24,.5); display:none; align-items:flex-end; justify-content:center; z-index:600; }
+.day-modal.open { display:flex; }
+.day-modal-box { background:var(--w); width:100%; max-width:480px; border-radius:18px 18px 0 0; max-height:85vh; overflow-y:auto; animation:sup .22s ease; padding-bottom:env(safe-area-inset-bottom,0px); }
+.dm-head { display:flex; justify-content:space-between; align-items:center; padding:18px 20px 14px; border-bottom:1px solid var(--bdr); }
+.dm-date { font-family:var(--fd); font-size:20px; font-weight:400; color:var(--ink); }
+.dm-close { background:none; border:none; font-size:24px; color:var(--ink3); cursor:pointer; }
+.dm-body { padding:16px 20px; }
+.dm-empty { font-size:14px; color:var(--ink3); font-style:italic; text-align:center; padding:20px 0; }
+
+/* Evento no modal */
+.dm-ev { background:var(--s2); border:1px solid var(--bdr); border-left:3px solid var(--rose); padding:13px 14px; margin-bottom:8px; }
+.dm-ev.blog { border-left-color:var(--sage); }
+.dm-ev.story { border-left-color:var(--gold); }
+.dm-ev.brief { border-left-color:var(--bdr2); }
+.dm-ev-top { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+.dm-ev-txt { font-size:14.5px; color:var(--ink); font-weight:600; flex:1; line-height:1.35; }
+.dm-ev-edit { background:none; border:1px solid var(--bdr); padding:4px 10px; font-size:11px; color:var(--ink3); cursor:pointer; border-radius:4px; white-space:nowrap; transition:.12s; font-family:inherit; flex-shrink:0; }
+.dm-ev-edit:hover { background:var(--rose-bg); border-color:var(--rose-b); color:var(--rose); }
+.dm-ev-detail { font-size:13px; color:var(--ink3); margin-top:6px; line-height:1.7; display:none; }
+.dm-ev.expanded .dm-ev-detail { display:block; }
+
+/* Adicionar evento */
+.dm-add { display:flex; gap:8px; margin-top:14px; padding-top:14px; border-top:1px solid var(--bdr); }
+.dm-add input { flex:1; background:var(--s2); border:1.5px solid var(--bdr2); padding:10px 12px; font-family:inherit; font-size:14px; color:var(--ink); outline:none; border-radius:6px; }
+.dm-add input:focus { border-color:var(--rose-l); }
+.dm-add-btn { background:var(--ink); color:var(--rose-l); border:none; padding:10px 16px; font-family:inherit; font-size:13px; cursor:pointer; border-radius:6px; white-space:nowrap; transition:.12s; }
+.dm-add-btn:hover { background:var(--rose); color:#fff; }
+
+/* Edit inline */
+.dm-edit-area { width:100%; background:var(--s2); border:1.5px solid var(--rose-l); padding:8px 10px; font-family:inherit; font-size:14px; color:var(--ink); outline:none; border-radius:4px; resize:none; margin-top:6px; line-height:1.6; }
+.dm-edit-save { background:var(--sage); color:#fff; border:none; padding:6px 14px; font-size:12px; cursor:pointer; border-radius:4px; margin-top:6px; font-family:inherit; transition:.12s; }
+.dm-edit-save:hover { opacity:.85; }
 .qbtn { width:100%; background:var(--w); border:1px solid var(--bdr); padding:14px 16px; text-align:left; font-size:14px; color:var(--ink2); cursor:pointer; margin-bottom:8px; border-radius:4px; transition:.15s; font-family:inherit; display:block; }
 .qbtn:hover { background:var(--rose-bg); border-color:var(--rose-b); color:var(--rose); }
 .qbtn:active { transform:scale(.99); }
@@ -335,6 +374,17 @@ textarea::placeholder { color:var(--ink3); }
       <button class="savebtn" id="savebtn" onclick="saveCfg()">Salvar</button>
       <div class="snote">Configurações salvas neste dispositivo</div>
     </div>
+  </div>
+</div>
+
+<!-- MODAL DIA DO CALENDÁRIO -->
+<div class="day-modal" id="dayModal">
+  <div class="day-modal-box">
+    <div class="dm-head">
+      <div class="dm-date" id="dmDate">Dia</div>
+      <button class="dm-close" onclick="closeDayModal()">×</button>
+    </div>
+    <div class="dm-body" id="dmBody"></div>
   </div>
 </div>
 
@@ -475,7 +525,7 @@ function save(){
 
 // ─── BOOT ───
 function boot(){
-  load(); initChat(); renderRotina(); renderPautas(); renderCal(); setupEvents();
+  load(); loadCalLS(); initChat(); renderRotina(); renderPautas(); renderCal(); setupEvents();
 }
 document.readyState==="loading"
   ? document.addEventListener("DOMContentLoaded",boot)
@@ -624,16 +674,25 @@ function renderPautas(){
 }
 
 // ─── CALENDÁRIO ───
+var NOMES_MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+var NOMES_DSEM=["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
+var EV_DET={
+  brief:"E-mail automático enviado às 08h com análise da semana + 5 pautas geradas pelo Claude + perguntas de feedback.",
+  reel:"Gravar Reel de 30–45 segundos. Hook nos primeiros 2s. Editar à tarde. Publicar na quarta às 11h ou 19h.",
+  blog:"Escrever post de 400–600 palavras. Terminar com CTA para serviço relevante. Publicar em danielagaia.com.br.",
+  story:"3 a 5 Stories: bastidor, dica rápida, CTA ou link do blog. Pelo menos 1 Story por dia mesmo nos outros dias."
+};
+
 function renderCal(){
   var cont=document.getElementById("calcont"); if(!cont) return;
   var pts=S.cal.split("-"); var ano=parseInt(pts[0]),mes=parseInt(pts[1]);
-  var nomes=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-  var ml=document.getElementById("mlabel"); if(ml) ml.textContent=nomes[mes-1]+" "+ano;
+  var ml=document.getElementById("mlabel"); if(ml) ml.textContent=NOMES_MESES[mes-1]+" "+ano;
   var prim=new Date(ano,mes-1,1).getDay();
   var diasMes=new Date(ano,mes,0).getDate();
   var hoje=new Date();
   var hStr=ano+"-"+String(mes).padStart(2,"0")+"-"+String(hoje.getDate()).padStart(2,"0");
-  var evs=CAL[S.cal]||{};
+  if(!CAL[S.cal]) CAL[S.cal]={};
+  var evs=CAL[S.cal];
   var dias=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
   var h='<div class="calwdays">'+dias.map(function(d){return '<div class="calwday">'+d+'</div>';}).join("")+'</div>';
   h+='<div class="caldays">';
@@ -644,9 +703,11 @@ function renderCal(){
     var dStr=ano+"-"+String(mes).padStart(2,"0")+"-"+String(d).padStart(2,"0");
     var cls="calday"+(ds===0?" sun":"")+(dStr===hStr?" today":"");
     var ev=evs[String(d)]||[];
-    h+='<div class="'+cls+'"><div class="cdnum">'+d+'</div>';
+    h+='<div class="'+cls+'" onclick="openDay('+d+','+mes+','+ano+')">';
+    h+='<div class="cdnum">'+d+'</div>';
     ev.slice(0,2).forEach(function(e){h+='<div class="cev '+e.t+'">'+e.tx+'</div>';});
-    if(ev.length>2) h+='<div style="font-size:8.5px;color:var(--ink3)">+'+(ev.length-2)+'</div>';
+    if(ev.length>2) h+='<div style="font-size:8px;color:var(--ink3)">+'+(ev.length-2)+'</div>';
+    if(!ev.length) h+='<div style="font-size:11px;color:var(--bdr2);text-align:center;margin-top:4px">＋</div>';
     h+='</div>';
   }
   var tot=prim+diasMes; var rest=tot%7===0?0:7-(tot%7);
@@ -655,6 +716,91 @@ function renderCal(){
   cont.innerHTML=h;
 }
 
+function openDay(d,mes,ano){
+  var ck=ano+"-"+String(mes).padStart(2,"0");
+  if(!CAL[ck]) CAL[ck]={};
+  var ev=CAL[ck][String(d)]||[];
+  var dsem=new Date(ano,mes-1,d).getDay();
+  var lbl=NOMES_DSEM[dsem]+", "+d+" de "+NOMES_MESES[mes-1];
+  document.getElementById("dmDate").textContent=lbl;
+  var body=document.getElementById("dmBody");
+  var h="";
+  if(!ev.length){
+    h+='<div class="dm-empty">Nenhuma tarefa neste dia.<br>Adicione uma abaixo.</div>';
+  } else {
+    ev.forEach(function(e,i){
+      var det=EV_DET[e.t]||"";
+      h+='<div class="dm-ev '+e.t+'" id="dmev-'+i+'">'
+        +'<div class="dm-ev-top">'
+        +'<div class="dm-ev-txt" onclick="this.closest('.dm-ev').classList.toggle('expanded')">'+e.tx+'</div>'
+        +'<button class="dm-ev-edit" onclick="editEv('+i+','+d+',''+ck+'')">✏️ Editar</button>'
+        +'</div>';
+      if(det) h+='<div class="dm-ev-detail">'+det+'</div>';
+      h+='</div>';
+    });
+  }
+  h+='<div class="dm-add" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--bdr)">'
+    +'<input type="text" id="dmNewEv" placeholder="Adicionar tarefa…" '
+    +'onkeydown="if(event.key==='Enter') addEvDay('+d+',''+ck+'')">'
+    +'<button class="dm-add-btn" onclick="addEvDay('+d+',''+ck+'')">＋</button>'
+    +'</div>';
+  body.innerHTML=h;
+  document.getElementById("dayModal").classList.add("open");
+}
+
+function editEv(idx,d,ck){
+  var ev=(CAL[ck]||{})[String(d)]||[];
+  var el=document.getElementById("dmev-"+idx); if(!el) return;
+  var cur=ev[idx]?ev[idx].tx:"";
+  el.innerHTML='<textarea class="dm-edit-area" id="editTA-'+idx+'" rows="2">'+cur+'</textarea>'
+    +'<button class="dm-edit-save" onclick="saveEv('+idx+','+d+',''+ck+'')">✓ Salvar</button>';
+  var ta=document.getElementById("editTA-"+idx); if(ta) ta.focus();
+}
+
+function saveEv(idx,d,ck){
+  var ta=document.getElementById("editTA-"+idx); if(!ta||!ta.value.trim()) return;
+  if(!CAL[ck]) CAL[ck]={}; if(!CAL[ck][String(d)]) CAL[ck][String(d)]=[];
+  if(CAL[ck][String(d)][idx]) CAL[ck][String(d)][idx].tx=ta.value.trim();
+  saveCalLS(ck);
+  openDay(d,parseInt(ck.split("-")[1]),parseInt(ck.split("-")[0]));
+  renderCal();
+}
+
+function addEvDay(d,ck){
+  var inp=document.getElementById("dmNewEv"); if(!inp||!inp.value.trim()) return;
+  var txt=inp.value.trim();
+  var t="story";
+  var tl=txt.toLowerCase();
+  if(tl.includes("reel")||tl.includes("grava")||tl.includes("tikto")) t="reel";
+  else if(tl.includes("blog")||tl.includes("escreve")) t="blog";
+  else if(tl.includes("briefing")||tl.includes("análise")||tl.includes("relatorio")) t="brief";
+  if(!CAL[ck]) CAL[ck]={}; if(!CAL[ck][String(d)]) CAL[ck][String(d)]=[];
+  CAL[ck][String(d)].push({t:t,tx:txt});
+  saveCalLS(ck);
+  openDay(d,parseInt(ck.split("-")[1]),parseInt(ck.split("-")[0]));
+  renderCal();
+}
+
+function saveCalLS(ck){
+  try{
+    var e=JSON.parse(localStorage.getItem("dg4cal")||"{}");
+    e[ck]=CAL[ck]; localStorage.setItem("dg4cal",JSON.stringify(e));
+  }catch(err){}
+}
+
+function loadCalLS(){
+  try{
+    var e=JSON.parse(localStorage.getItem("dg4cal")||"{}");
+    Object.keys(e).forEach(function(k){
+      if(!CAL[k]) CAL[k]={};
+      Object.keys(e[k]).forEach(function(d){ CAL[k][d]=e[k][d]; });
+    });
+  }catch(err){}
+}
+
+function closeDayModal(){
+  document.getElementById("dayModal").classList.remove("open");
+}
 // ─── MODAIS ───
 function om(id){var e=document.getElementById(id);if(e)e.classList.add("open");}
 function cm(id){var e=document.getElementById(id);if(e)e.classList.remove("open");}
@@ -663,6 +809,9 @@ function setupEvents(){
   var pr=document.getElementById("prev"); var nx=document.getElementById("next");
   if(pr) pr.addEventListener("click",function(){mvCal(-1);});
   if(nx) nx.addEventListener("click",function(){mvCal(1);});
+  document.getElementById("dayModal").addEventListener("click",function(e){
+    if(e.target===this) closeDayModal();
+  });
   document.querySelectorAll(".overlay").forEach(function(o){
     o.addEventListener("click",function(e){if(e.target===o)o.classList.remove("open");});
   });
